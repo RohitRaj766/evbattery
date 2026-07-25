@@ -1,0 +1,72 @@
+{
+  "name": "ev-battery-swapping-platform",
+  "version": "1.0.0",
+  "description": "Real-Time EV Battery Swapping & Thermal Safety Platform",
+  "main": "dist/server.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio",
+    "lint": "eslint src/**/*.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.10.2",
+    "bcryptjs": "^2.4.3",
+    "bullmq": "^5.4.2",
+    "compression": "^1.7.4",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.18.3",
+    "express-rate-limit": "^7.2.0",
+    "helmet": "^7.1.0",
+    "ioredis": "^5.3.2",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "passport-jwt": "^4.0.1",
+    "socket.io": "^4.7.5",
+    "swagger-themes": "^1.4.3",
+    "swagger-ui-express": "^5.0.0",
+    "uuid": "^11.1.0",
+    "winston": "^3.12.0",
+    "zod": "^3.22.4",
+    "yamljs": "^0.3.0"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/compression": "^1.7.5",
+    "@types/cookie-parser": "^1.4.7",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.6",
+    "@types/morgan": "^1.9.9",
+    "@types/node": "^20.11.30",
+    "@types/passport": "^1.0.16",
+    "@types/passport-google-oauth20": "^2.0.14",
+    "@types/passport-jwt": "^4.0.1",
+    "@types/swagger-ui-express": "^4.1.6",
+    "@types/uuid": "^10.0.0",
+    "@types/yamljs": "^0.2.34",
+    "@typescript-eslint/eslint-plugin": "^8.22.0",
+    "@typescript-eslint/parser": "^8.22.0",
+    "eslint": "^9.19.0",
+    "prisma": "^5.22.0",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.4.2"
+  },
+  "overrides": {
+    "brace-expansion": "^2.0.1",
+    "minimatch": "^9.0.5",
+    "glob": "^10.4.5",
+    "uuid": "^11.1.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

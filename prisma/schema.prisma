@@ -1,0 +1,233 @@
+// ==============================================================================
+// Prisma Schema - EV Battery Swapping & Thermal Safety Platform
+// ==============================================================================
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x", "linux-musl"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enumerations ─────────────────────────────────────────────────────────────
+
+enum Role {
+  OPERATOR  // Station-level staff who manage swaps
+  ADMIN     // Full system access: fleet, stations, alarms
+}
+
+enum DockState {
+  AVAILABLE        // Empty dock, ready to receive a battery
+  CHARGING         // Battery actively charging
+  READY            // Battery fully charged, available for swap
+  ISOLATED_CUTOFF  // Thermal safety engaged - power isolated
+  MAINTENANCE      // Offline for maintenance
+}
+
+enum AlarmStatus {
+  ACTIVE    // Threshold breach confirmed, cutoff engaged
+  SILENCED  // Operator acknowledged, monitoring continues
+  RESOLVED  // Temperature normalized, dock restored
+}
+
+enum BatteryHealthState {
+  HEALTHY       // SoH >= 85%, optimal performance
+  DEGRADED      // 75% <= SoH < 85%, acceptable but monitored
+  CRITICAL      // SoH < 75%, must be decommissioned
+  DECOMMISSIONED // Retired from fleet, awaiting disposal
+}
+
+enum SwapStatus {
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  name         String
+  password     String?  // Nullable for OAuth-only users
+  role         Role     @default(OPERATOR)
+  googleId     String?  @unique
+  avatarUrl    String?
+  isActive     Boolean  @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  tokenVersion Int      @default(0)
+
+  // Relations
+  resolvedAlarms Alarm[] @relation("AlarmResolvedBy")
+  swapsProcessed Swap[]  @relation("SwapProcessedBy")
+  refreshTokens  RefreshToken[]
+
+  @@index([email])
+  @@index([role])
+  @@map("users")
+}
+
+model Station {
+  id          String   @id @default(uuid())
+  name        String
+  location    String   // Human-readable address
+  latitude    Float
+  longitude   Float
+  isActive    Boolean  @default(true)
+  operatorId  String?  // Assigned operator user ID
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  docks  Dock[]
+  swaps  Swap[]
+
+  @@index([isActive])
+  @@map("stations")
+}
+
+model Dock {
+  id          String    @id @default(uuid())
+  dockNumber  Int       // Physical bay number within station (1, 2, 3...)
+  stationId   String
+  batteryId   String?   @unique // Currently installed battery (nullable when empty)
+  state       DockState @default(AVAILABLE)
+  // Latest telemetry snapshot - denormalized for fast swap-recommender queries
+  // The source of truth is the Telemetry table; this is a cache
+  currentSoC  Float     @default(0)   // State of Charge (0-100%)
+  currentSoH  Float     @default(100) // State of Health (0-100%)
+  currentTemp Float     @default(25)  // Temperature in Celsius
+  lastTelemetryAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  station   Station    @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  battery   Battery?   @relation(fields: [batteryId], references: [id], onDelete: SetNull)
+  alarms    Alarm[]
+  telemetry Telemetry[]
+
+  @@unique([stationId, dockNumber])
+  @@index([stationId])
+  @@index([state])
+  @@index([stationId, state]) // Composite for swap-recommender query
+  @@map("docks")
+}
+
+model Battery {
+  id              String             @id @default(uuid())
+  serialNumber    String             @unique
+  manufacturer    String
+  modelName       String
+  capacityKwh     Float              // Nominal capacity in kWh
+  soh             Float              @default(100) // State of Health %
+  healthState     BatteryHealthState @default(HEALTHY)
+  cycleCount      Int                @default(0)   // Total charge/discharge cycles
+  manufacturedAt  DateTime
+  decommissionedAt DateTime?
+  notes           String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  // Relations - a battery occupies one dock at a time
+  dock       Dock?
+  swaps      Swap[]
+  telemetry  Telemetry[]
+
+  @@index([healthState])
+  @@index([soh])
+  @@map("batteries")
+}
+
+model Telemetry {
+  id          String   @id @default(uuid())
+  dockId      String
+  batteryId   String
+  voltage     Float    // Volts
+  current     Float    // Amperes (positive = charging, negative = discharging)
+  temperature Float    // Celsius - PRIMARY safety metric
+  soc         Float    // State of Charge %
+  soh         Float    // State of Health %
+  timestamp   DateTime @default(now())
+
+  // Relations
+  dock    Dock    @relation(fields: [dockId], references: [id], onDelete: Cascade)
+  battery Battery @relation(fields: [batteryId], references: [id], onDelete: Cascade)
+
+  // Critical index: time-series queries are always (batteryId, timestamp DESC)
+  @@index([batteryId, timestamp(sort: Desc)])
+  @@index([dockId, timestamp(sort: Desc)])
+  @@index([timestamp(sort: Desc)]) // Global time-series
+  @@map("telemetry")
+}
+
+model Alarm {
+  id          String      @id @default(uuid())
+  dockId      String
+  batteryId   String?     // The battery involved (may be removed post-incident)
+  type        String      @default("THERMAL_RUNAWAY") // Extensible alarm type
+  status      AlarmStatus @default(ACTIVE)
+  peakTemp    Float       // The maximum temperature that triggered the alarm
+  threshold   Float       // The threshold that was breached
+  triggeredAt DateTime    @default(now())
+  silencedAt  DateTime?
+  resolvedAt  DateTime?
+  resolvedBy  String?     // User ID who resolved
+  notes       String?     // Operator notes on resolution
+
+  // Relations
+  dock     Dock  @relation(fields: [dockId], references: [id], onDelete: Cascade)
+  resolver User? @relation("AlarmResolvedBy", fields: [resolvedBy], references: [id], onDelete: SetNull)
+
+  @@index([status])             // Fast active alarm queries
+  @@index([dockId])
+  @@index([triggeredAt(sort: Desc)])
+  @@index([status, triggeredAt(sort: Desc)]) // Dashboard: recent active alarms
+  @@map("alarms")
+}
+
+model Swap {
+  id              String     @id @default(uuid())
+  stationId       String
+  batteryOutId    String     // Battery given to driver
+  batteryInId     String?    // Battery received from driver (null if driver had no battery)
+  driverPhone     String     // Driver identifier (phone number)
+  driverVehicleId String?    // Vehicle plate/ID
+  status          SwapStatus @default(COMPLETED)
+  socAtSwap       Float      // SoC of outgoing battery at time of swap
+  sohAtSwap       Float      // SoH of outgoing battery at time of swap
+  tempAtSwap      Float      // Temp of outgoing battery at time of swap
+  processedBy     String?    // Operator user ID
+  swappedAt       DateTime   @default(now())
+  notes           String?
+
+  // Relations
+  station   Station @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  battery   Battery @relation(fields: [batteryOutId], references: [id])
+  operator  User?   @relation("SwapProcessedBy", fields: [processedBy], references: [id], onDelete: SetNull)
+
+  @@index([stationId])
+  @@index([driverPhone])
+  @@index([swappedAt(sort: Desc)])
+  @@map("swaps")
+}
+
+model RefreshToken {
+  id          String   @id @default(uuid())
+  tokenHash   String
+  userId      String
+  expiresAt   DateTime
+  revoked     Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}

@@ -1,0 +1,74 @@
+version: '3.9'
+
+services:
+  # ─── PostgreSQL Database ────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: evbattery_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: evbattery_user
+      POSTGRES_PASSWORD: evbattery_pass
+      POSTGRES_DB: evbattery_db
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U evbattery_user -d evbattery_db']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Redis (Cache + BullMQ Queue) ───────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: evbattery_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --loglevel warning
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Node.js API Service ────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: evbattery_api
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://evbattery_user:evbattery_pass@postgres:5432/evbattery_db?schema=public
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_ACCESS_EXPIRES_IN: 15m
+      JWT_REFRESH_EXPIRES_IN: 7d
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GOOGLE_CALLBACK_URL: ${GOOGLE_CALLBACK_URL}
+      THERMAL_RUNAWAY_THRESHOLD_CELSIUS: 55
+      THERMAL_ALARM_DEBOUNCE_MS: 3000
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./prisma:/app/prisma
+
+volumes:
+  postgres_data:
+  redis_data:
