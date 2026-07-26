@@ -14,9 +14,6 @@ import Redis, { RedisOptions } from 'ioredis';
 import { env } from './env.config';
 
 const redisOptions: RedisOptions = {
-  host: env.REDIS_HOST,
-  port: env.REDIS_PORT,
-  password: env.REDIS_PASSWORD || undefined,
   maxRetriesPerRequest: null, // Required by BullMQ
   enableReadyCheck: false,    // Required by BullMQ
   retryStrategy: (times: number) => {
@@ -31,10 +28,10 @@ const redisOptions: RedisOptions = {
 };
 
 // General-purpose Redis client
-export const redisClient = new Redis(redisOptions);
+export const redisClient = new Redis(env.REDIS_URL, redisOptions);
 
 // Dedicated BullMQ connection - must NOT be shared with regular commands
-export const bullRedis = new Redis(redisOptions);
+export const bullRedis = new Redis(env.REDIS_URL, redisOptions);
 
 redisClient.on('connect', () => console.log('✅ Redis: General client connected'));
 redisClient.on('error', (err) => console.error('❌ Redis error:', err.message));

@@ -20,6 +20,8 @@ import { env } from './config/env.config';
 import { swaggerDocument } from './config/swagger.config';
 import { errorMiddleware } from './middlewares/error.middleware';
 import { buildOAuthCallbackHtml } from './utils/oauthCallbackPage';
+import { prisma } from './config/database.config';
+import { redisClient } from './config/redis.config';
 
 // ─── Module Routers ───────────────────────────────────────────────────────────
 import authRoutes from './modules/auth/auth.routes';
@@ -99,13 +101,29 @@ const createApp = (): Application => {
   });
 
   // ─── Health Check ─────────────────────────────────────────────────────────
-  app.get('/health', (_req: Request, res: Response) => {
-    res.status(200).json({
-      success: true,
-      status: 'healthy',
-      timestamp: new Date().toISOString(),
-      environment: env.NODE_ENV,
-    });
+  app.get('/health', async (_req: Request, res: Response) => {
+    try {
+      await prisma.$queryRaw`SELECT 1`;
+      const redisStatus = redisClient.status;
+
+      res.status(200).json({
+        success: true,
+        status: 'healthy',
+        services: {
+          database: 'connected',
+          redis: redisStatus === 'ready' ? 'connected' : redisStatus
+        },
+        timestamp: new Date().toISOString(),
+        environment: env.NODE_ENV,
+      });
+    } catch (error: any) {
+      res.status(503).json({
+        success: false,
+        status: 'unhealthy',
+        error: error.message,
+        timestamp: new Date().toISOString(),
+      });
+    }
   });
 
   // ─── API Routes ───────────────────────────────────────────────────────────

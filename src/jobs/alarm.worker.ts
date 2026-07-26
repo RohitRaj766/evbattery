@@ -158,7 +158,7 @@ const processAlarmJob = async (job: Job<ThermalAlarmJobData>): Promise<void> => 
 
 /** Initialize and export the BullMQ worker */
 export const startAlarmWorker = (): Worker<ThermalAlarmJobData> => {
-  const worker = new Worker<ThermalAlarmJobData>(
+  const worker = new Worker<ThermalAlarmJobData, any, string>(
     ALARM_QUEUE_NAME,
     processAlarmJob,
     {

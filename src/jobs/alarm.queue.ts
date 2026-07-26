@@ -19,7 +19,7 @@ import { ThermalAlarmJobData } from '../types';
 
 export const ALARM_QUEUE_NAME = 'thermal-alarm-processing';
 
-export const alarmQueue = new Queue<ThermalAlarmJobData>(ALARM_QUEUE_NAME, {
+export const alarmQueue = new Queue<ThermalAlarmJobData, any, string>(ALARM_QUEUE_NAME, {
   connection: bullRedis,
   defaultJobOptions: {
     // Keep completed jobs for 24 hours for audit trail

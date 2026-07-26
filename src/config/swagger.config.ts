@@ -283,6 +283,57 @@ export const swaggerDocument = {
   paths: {
 
     // ════════════════════════════════════════════════════════
+    //  SYSTEM
+    // ════════════════════════════════════════════════════════
+
+    '/health': {
+      get: {
+        tags: ['System'],
+        summary: 'Health Check',
+        description: 'Returns the health status of the API, Database, and Redis.',
+        servers: [
+          {
+            url: env.API_BASE_URL,
+            description: 'Root environment'
+          }
+        ],
+        security: [],
+        responses: {
+          200: {
+            description: 'API is healthy',
+            content: {
+              'application/json': {
+                example: {
+                  success: true,
+                  status: 'healthy',
+                  services: {
+                    database: 'connected',
+                    redis: 'connected',
+                  },
+                  timestamp: '2023-10-25T12:00:00.000Z',
+                  environment: 'development',
+                },
+              },
+            },
+          },
+          503: {
+            description: 'API is unhealthy',
+            content: {
+              'application/json': {
+                example: {
+                  success: false,
+                  status: 'unhealthy',
+                  error: 'Database connection failed',
+                  timestamp: '2023-10-25T12:00:00.000Z',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+
+    // ════════════════════════════════════════════════════════
     //  AUTH  (9 endpoints)
     // ════════════════════════════════════════════════════════
 
