@@ -22,8 +22,12 @@ export const swaggerDocument = {
   },
   servers: [
     {
-      url: `${env.API_BASE_URL}/api/v1`,
-      description: 'Current environment',
+      url: `${env.DEV_BASE_URL}/api/v1`,
+      description: 'Development environment',
+    },
+    {
+      url: `${env.PROD_BASE_URL}/api/v1`,
+      description: 'Production environment',
     },
   ],
 
@@ -293,8 +297,12 @@ export const swaggerDocument = {
         description: 'Returns the health status of the API, Database, and Redis.',
         servers: [
           {
-            url: env.API_BASE_URL,
-            description: 'Root environment'
+            url: env.DEV_BASE_URL,
+            description: 'Development environment'
+          },
+          {
+            url: env.PROD_BASE_URL,
+            description: 'Production environment'
           }
         ],
         security: [],

@@ -16,6 +16,8 @@ const EnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(3000),
   API_BASE_URL: z.string().url().default('http://localhost:3000'),
+  DEV_BASE_URL: z.string().url().default('http://localhost:3000'),
+  PROD_BASE_URL: z.string().url().default('https://evbattery.onrender.com'),
 
   // Database
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),

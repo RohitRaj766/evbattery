@@ -81,7 +81,7 @@ const createApp = (): Application => {
 
   // ─── API Documentation ────────────────────────────────────────────────────
   app.use(
-    '/api-docs',
+    '/docs',
     swaggerUi.serve,
     swaggerUi.setup(swaggerDocument, {
       customSiteTitle: 'EV Battery API Docs',
