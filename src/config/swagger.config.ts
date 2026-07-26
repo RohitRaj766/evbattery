@@ -15,19 +15,11 @@ export const swaggerDocument = {
     description:
       'Production API for managing real-time EV battery swapping stations, thermal safety monitoring, and fleet lifecycle management.',
     version: '1.0.0',
-    contact: {
-      name: 'Platform Engineering',
-      email: 'engineering@evbattery.in',
-    },
   },
   servers: [
     {
-      url: `${env.DEV_BASE_URL}/api/v1`,
-      description: 'Development environment',
-    },
-    {
-      url: `${env.PROD_BASE_URL}/api/v1`,
-      description: 'Production environment',
+      url: `${env.API_BASE_URL}/api/v1`,
+      description: 'Current environment',
     },
   ],
 
@@ -297,12 +289,8 @@ export const swaggerDocument = {
         description: 'Returns the health status of the API, Database, and Redis.',
         servers: [
           {
-            url: env.DEV_BASE_URL,
-            description: 'Development environment'
-          },
-          {
-            url: env.PROD_BASE_URL,
-            description: 'Production environment'
+            url: env.API_BASE_URL,
+            description: 'Root environment'
           }
         ],
         security: [],

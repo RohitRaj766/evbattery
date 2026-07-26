@@ -40,7 +40,14 @@ const createApp = (): Application => {
   // ─── Security Middleware ──────────────────────────────────────────────────
   app.use(
     helmet({
-      contentSecurityPolicy: env.NODE_ENV === 'production',
+      contentSecurityPolicy: env.NODE_ENV === 'production' ? {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'", "'unsafe-inline'", "https:"],
+          styleSrc: ["'self'", "'unsafe-inline'", "https:"],
+          imgSrc: ["'self'", "data:", "https:"],
+        },
+      } : false,
     })
   );
 
@@ -85,7 +92,7 @@ const createApp = (): Application => {
     swaggerUi.serve,
     swaggerUi.setup(swaggerDocument, {
       customSiteTitle: 'EV Battery API Docs',
-      customJs: ['/swagger-auth.js'], // Keeping this just for the Google Login button logic
+      customJs: '/swagger-auth.js', // Keeping this just for the Google Login button logic
     })
   );
 
