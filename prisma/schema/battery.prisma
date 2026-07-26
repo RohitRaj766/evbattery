@@ -1,0 +1,24 @@
+model Battery {
+  id              String             @id @default(uuid())
+  serialNumber    String             @unique
+  manufacturer    String
+  modelName       String
+  capacityKwh     Float              // Nominal capacity in kWh
+  soh             Float              @default(100) // State of Health %
+  healthState     BatteryHealthState @default(HEALTHY)
+  cycleCount      Int                @default(0)   // Total charge/discharge cycles
+  manufacturedAt  DateTime
+  decommissionedAt DateTime?
+  notes           String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  // Relations - a battery occupies one dock at a time
+  dock       Dock?
+  swaps      Swap[]
+  telemetry  Telemetry[]
+
+  @@index([healthState])
+  @@index([soh])
+  @@map("batteries")
+}

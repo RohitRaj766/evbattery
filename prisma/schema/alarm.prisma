@@ -1,0 +1,24 @@
+model Alarm {
+  id          String      @id @default(uuid())
+  dockId      String
+  batteryId   String?     // The battery involved (may be removed post-incident)
+  type        String      @default("THERMAL_RUNAWAY") // Extensible alarm type
+  status      AlarmStatus @default(ACTIVE)
+  peakTemp    Float       // The maximum temperature that triggered the alarm
+  threshold   Float       // The threshold that was breached
+  triggeredAt DateTime    @default(now())
+  silencedAt  DateTime?
+  resolvedAt  DateTime?
+  resolvedBy  String?     // User ID who resolved
+  notes       String?     // Operator notes on resolution
+
+  // Relations
+  dock     Dock  @relation(fields: [dockId], references: [id], onDelete: Cascade)
+  resolver User? @relation("AlarmResolvedBy", fields: [resolvedBy], references: [id], onDelete: SetNull)
+
+  @@index([status])             // Fast active alarm queries
+  @@index([dockId])
+  @@index([triggeredAt(sort: Desc)])
+  @@index([status, triggeredAt(sort: Desc)]) // Dashboard: recent active alarms
+  @@map("alarms")
+}

@@ -28,6 +28,9 @@ import alarmRoutes from './modules/alarms/alarm.routes';
 import stationRoutes from './modules/stations/station.routes';
 import batteryRoutes from './modules/batteries/battery.routes';
 import swapRoutes from './modules/swaps/swap.routes';
+import operatorRoutes from './modules/operators/operator.routes';
+import assignmentRoutes from './modules/assignments/assignment.routes';
+import enumRoutes from './modules/enums/enum.routes';
 
 const createApp = (): Application => {
   const app = express();
@@ -114,6 +117,9 @@ const createApp = (): Application => {
   app.use(`${API_PREFIX}/stations`, stationRoutes);
   app.use(`${API_PREFIX}/batteries`, batteryRoutes);
   app.use(`${API_PREFIX}/swaps`, swapRoutes);
+  app.use(`${API_PREFIX}/operators`, operatorRoutes);
+  app.use(`${API_PREFIX}/enums`, enumRoutes);
+  app.use(API_PREFIX, assignmentRoutes); // assignments handles multiple prefixes (/stations, /operators)
 
   // ─── 404 Handler ─────────────────────────────────────────────────────────
   app.use((req: Request, res: Response) => {

@@ -23,6 +23,16 @@ export const StationController = {
     } catch (err) { next(err); }
   },
 
+  /** POST /stations/:id/docks */
+  async addDock(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const stationId = req.params['id']!;
+      const { dockNumbers } = req.body;
+      const docks = await StationService.createDocks(stationId, dockNumbers);
+      res.status(201).json({ success: true, message: `${docks.count} docks created`, data: docks });
+    } catch (err) { next(err); }
+  },
+
   /** GET /stations/:id */
   async getById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
@@ -40,6 +50,25 @@ export const StationController = {
         message: 'Optimal battery pack identified for swap',
         data: recommendation,
       });
+    } catch (err) { next(err); }
+  },
+
+  /** PATCH /stations/:stationId/docks/:dockId/insert */
+  async insertBattery(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { stationId, dockId } = req.params as { stationId: string; dockId: string };
+      const { batteryId } = req.body;
+      const dock = await StationService.insertBattery(stationId, dockId, batteryId);
+      res.status(200).json({ success: true, message: 'Battery inserted successfully', data: dock });
+    } catch (err) { next(err); }
+  },
+
+  /** PATCH /stations/:stationId/docks/:dockId/remove */
+  async removeBattery(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { stationId, dockId } = req.params as { stationId: string; dockId: string };
+      const dock = await StationService.removeBattery(stationId, dockId);
+      res.status(200).json({ success: true, message: 'Battery removed successfully', data: dock });
     } catch (err) { next(err); }
   },
 

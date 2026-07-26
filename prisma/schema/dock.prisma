@@ -1,0 +1,27 @@
+model Dock {
+  id          String    @id @default(uuid())
+  dockNumber  Int       // Physical bay number within station (1, 2, 3...)
+  stationId   String
+  batteryId   String?   @unique // Currently installed battery (nullable when empty)
+  state       DockState @default(AVAILABLE)
+  // Latest telemetry snapshot - denormalized for fast swap-recommender queries
+  // The source of truth is the Telemetry table; this is a cache
+  currentSoC  Float     @default(0)   // State of Charge (0-100%)
+  currentSoH  Float     @default(100) // State of Health (0-100%)
+  currentTemp Float     @default(25)  // Temperature in Celsius
+  lastTelemetryAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  station   Station    @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  battery   Battery?   @relation(fields: [batteryId], references: [id], onDelete: SetNull)
+  alarms    Alarm[]
+  telemetry Telemetry[]
+
+  @@unique([stationId, dockNumber])
+  @@index([stationId])
+  @@index([state])
+  @@index([stationId, state]) // Composite for swap-recommender query
+  @@map("docks")
+}

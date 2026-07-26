@@ -51,14 +51,14 @@ const bootstrap = async (): Promise<void> => {
   // ── 6. Start HTTP Server ─────────────────────────────────────────────────
   httpServer.listen(env.PORT, () => {
     console.log(`
-╔═══════════════════════════════════════════════════════════╗
-║    🔋 EV Battery Swapping & Thermal Safety Platform       ║
-╠═══════════════════════════════════════════════════════════╣
-║  Environment : ${env.NODE_ENV.padEnd(43)}║
-║  HTTP Server : http://localhost:${env.PORT.toString().padEnd(28)}║
+╔═══════════════════════════════════════════════════════════===========╗
+║    🔋 EV Battery Swapping & Thermal Safety Platform                 ║
+╠═══════════════════════════════════════════════════════════===========╣
+║  Environment : ${env.NODE_ENV.padEnd(43)}                            ║
+║  HTTP Server : http://localhost:${env.PORT.toString().padEnd(28)}    ║
 ║  API Docs    : http://localhost:${env.PORT}/api-docs${' '.padEnd(18)}║
-║  Socket.io   : ws://localhost:${env.PORT.toString().padEnd(29)}║
-╚═══════════════════════════════════════════════════════════╝
+║  Socket.io   : ws://localhost:${env.PORT.toString().padEnd(29)}      ║
+╚═══════════════════════════════════════════════════════════===========╝
     `);
   });
 

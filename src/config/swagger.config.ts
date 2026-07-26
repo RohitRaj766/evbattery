@@ -70,11 +70,11 @@ export const swaggerDocument = {
         type: 'object',
         required: ['email', 'password', 'name'],
         properties: {
-          email: { type: 'string', format: 'email', example: 'operator@evbattery.in' },
+          email: { type: 'string', format: 'email', example: 'rohit@gmail.com' },
           password: {
             type: 'string',
             minLength: 8,
-            example: 'StrongPass@123',
+            example: 'StrongPassword@123',
             description: 'Min 8 chars, must include uppercase letter and number.',
           },
           name: { type: 'string', example: 'Rohit Sharma' },
@@ -90,8 +90,8 @@ export const swaggerDocument = {
         type: 'object',
         required: ['email', 'password'],
         properties: {
-          email: { type: 'string', format: 'email', example: 'operator@evbattery.in' },
-          password: { type: 'string', example: 'StrongPass@123' },
+          email: { type: 'string', format: 'email', example: 'rohit@gmail.com' },
+          password: { type: 'string', example: 'StrongPassword@123' },
         },
       },
       SetPasswordBody: {
@@ -135,12 +135,52 @@ export const swaggerDocument = {
           },
           latitude: { type: 'number', minimum: -90, maximum: 90, example: 28.5562 },
           longitude: { type: 'number', minimum: -180, maximum: 180, example: 77.0595 },
-          operatorId: {
+        },
+      },
+      CreateOperatorBody: {
+        type: 'object',
+        required: ['name', 'email'],
+        properties: {
+          name: { type: 'string', minLength: 2, example: 'Rahul Sharma' },
+          email: { type: 'string', format: 'email', example: 'rahul@example.com' },
+          phone: { type: 'string', example: '9876543210' },
+        },
+      },
+      AssignOperatorBody: {
+        type: 'object',
+        required: ['operatorId'],
+        properties: {
+          operatorId: { type: 'string', format: 'uuid', example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' },
+          isPrimary: { type: 'boolean', example: true },
+        },
+      },
+      UpdateAssignmentBody: {
+        type: 'object',
+        properties: {
+          assignmentStatus: { type: 'string', enum: ['ACTIVE', 'INACTIVE'], example: 'ACTIVE' },
+          isPrimary: { type: 'boolean', example: true },
+        },
+      },
+      CreateDocksBody: {
+        type: 'object',
+        required: ['dockNumbers'],
+        properties: {
+          dockNumbers: {
+            type: 'array',
+            items: { type: 'integer', minimum: 1 },
+            example: [1, 2, 3, 4],
+            description: 'Array of physical bay numbers to create',
+          },
+        },
+      },
+      InsertBatteryBody: {
+        type: 'object',
+        required: ['batteryId'],
+        properties: {
+          batteryId: {
             type: 'string',
             format: 'uuid',
-            nullable: true,
-            example: null,
-            description: 'Optional: assign a specific operator user to this station.',
+            example: 'b2c3d4e5-f6a1-8901-bcde-f12345678901',
           },
         },
       },
@@ -258,8 +298,8 @@ export const swaggerDocument = {
             'application/json': {
               schema: { $ref: '#/components/schemas/RegisterBody' },
               example: {
-                email: 'operator@evbattery.in',
-                password: 'StrongPass@123',
+                email: 'rohit@gmail.com',
+                password: 'StrongPassword@123',
                 name: 'Rohit Sharma',
                 role: 'OPERATOR',
               },
@@ -276,7 +316,7 @@ export const swaggerDocument = {
                   message: 'User registered successfully',
                   data: {
                     accessToken: 'eyJhbG...',
-                    user: { id: 'uuid', email: 'operator@evbattery.in', name: 'Rohit Sharma', role: 'OPERATOR' },
+                    user: { id: 'uuid', email: 'rohit@gmail.com', name: 'Rohit Sharma', role: 'OPERATOR' },
                   },
                 },
               },
@@ -300,8 +340,8 @@ export const swaggerDocument = {
             'application/json': {
               schema: { $ref: '#/components/schemas/LoginBody' },
               example: {
-                email: 'operator@evbattery.in',
-                password: 'StrongPass@123',
+                email: 'rohit@gmail.com',
+                password: 'StrongPassword@123',
               },
             },
           },
@@ -316,7 +356,7 @@ export const swaggerDocument = {
                   message: 'Login successful',
                   data: {
                     accessToken: 'eyJhbG...',
-                    user: { id: 'uuid', email: 'operator@evbattery.in', role: 'OPERATOR' },
+                    user: { id: 'uuid', email: 'rohit@gmail.com', role: 'OPERATOR' },
                   },
                 },
               },
@@ -393,7 +433,7 @@ export const swaggerDocument = {
                   success: true,
                   message: 'User profile',
                   data: {
-                    user: { sub: 'uuid', email: 'operator@evbattery.in', role: 'OPERATOR' },
+                    user: { sub: 'uuid', email: 'rohit@gmail.com', role: 'OPERATOR' },
                   },
                 },
               },
@@ -705,6 +745,54 @@ export const swaggerDocument = {
       },
     },
 
+    '/enums': {
+      get: {
+        tags: ['Enums'],
+        summary: 'Get all system enums',
+        description: 'Returns all available enum values for dropdowns and reference (Roles, Dock States, etc).',
+        security: [{ BearerAuth: [] }],
+        responses: {
+          200: { description: 'Enums retrieved successfully' },
+        },
+      },
+    },
+
+    '/stations/{id}/docks': {
+      post: {
+        tags: ['Stations'],
+        summary: 'Create multiple docks for a station (ADMIN only)',
+        description: 'Registers new physical dock bays within a station. Requires ADMIN role.',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            description: 'Station UUID',
+            schema: { type: 'string', format: 'uuid' },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/CreateDocksBody' },
+              example: {
+                dockNumbers: [1, 2, 3, 4],
+              },
+            },
+          },
+        },
+        responses: {
+          201: { description: 'Docks created successfully' },
+          400: { description: 'Validation error' },
+          403: { description: 'ADMIN role required' },
+          404: { description: 'Station not found' },
+          409: { description: 'One or more dock numbers already exist in this station' },
+        },
+      },
+    },
+
     '/stations/{id}/recommend-swap': {
       get: {
         tags: ['Stations'],
@@ -744,6 +832,80 @@ export const swaggerDocument = {
           },
           404: { description: 'No batteries meet SoC/temperature criteria — wait for charging/cooling' },
           409: { description: 'No batteries are READY at this station — all docks charging or isolated' },
+        },
+      },
+    },
+
+    '/stations/{stationId}/docks/{dockId}/insert': {
+      patch: {
+        tags: ['Stations'],
+        summary: 'Insert a battery into an empty dock (initial pairing)',
+        description: 'Used by ADMIN to initially insert a battery into an empty dock. Once inserted, the dock state becomes CHARGING.',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          {
+            name: 'stationId',
+            in: 'path',
+            required: true,
+            description: 'Station UUID',
+            schema: { type: 'string', format: 'uuid' },
+          },
+          {
+            name: 'dockId',
+            in: 'path',
+            required: true,
+            description: 'Dock UUID',
+            schema: { type: 'string', format: 'uuid' },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/InsertBatteryBody' },
+              example: {
+                batteryId: 'b2c3d4e5-f6a1-8901-bcde-f12345678901',
+              },
+            },
+          },
+        },
+        responses: {
+          200: { description: 'Battery inserted successfully' },
+          400: { description: 'Validation error' },
+          403: { description: 'ADMIN role required' },
+          404: { description: 'Dock or Battery not found' },
+          409: { description: 'Dock already has a battery or is isolated, or battery is decommissioned' },
+        },
+      },
+    },
+
+    '/stations/{stationId}/docks/{dockId}/remove': {
+      patch: {
+        tags: ['Stations'],
+        summary: 'Remove a battery from a dock',
+        description: 'Used by ADMIN to remove a battery from a dock without completing a swap. The dock becomes AVAILABLE.',
+        security: [{ BearerAuth: [] }],
+        parameters: [
+          {
+            name: 'stationId',
+            in: 'path',
+            required: true,
+            description: 'Station UUID',
+            schema: { type: 'string', format: 'uuid' },
+          },
+          {
+            name: 'dockId',
+            in: 'path',
+            required: true,
+            description: 'Dock UUID',
+            schema: { type: 'string', format: 'uuid' },
+          },
+        ],
+        responses: {
+          200: { description: 'Battery removed successfully' },
+          403: { description: 'ADMIN role required' },
+          404: { description: 'Dock not found' },
+          409: { description: 'Dock is already empty or isolated' },
         },
       },
     },

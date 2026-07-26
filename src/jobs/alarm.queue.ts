@@ -43,7 +43,7 @@ export const enqueueThermalAlarm = async (
   data: ThermalAlarmJobData,
   debounceMs: number = 3000,
 ): Promise<void> => {
-  const jobId = `dock-thermal:${data.dockId}`;
+  const jobId = `dock-thermal-${data.dockId}`;
 
   await alarmQueue.add('evaluate-thermal-breach', data, {
     jobId,       // Deduplication key - prevents duplicate jobs for same dock

@@ -1,0 +1,39 @@
+model Station {
+  id          String   @id @default(uuid())
+  name        String
+  location    String   // Human-readable address
+  latitude    Float
+  longitude   Float
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  docks       Dock[]
+  swaps       Swap[]
+  assignments StationAssignment[]
+
+  @@index([isActive])
+  @@map("stations")
+}
+
+model StationAssignment {
+  id               String           @id @default(uuid())
+  operatorId       String
+  stationId        String
+  assignedAt       DateTime         @default(now())
+  unassignedAt     DateTime?
+  assignmentStatus AssignmentStatus @default(ACTIVE)
+  isPrimary        Boolean          @default(false)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  // Relations
+  operator User    @relation(fields: [operatorId], references: [id], onDelete: Cascade)
+  station  Station @relation(fields: [stationId], references: [id], onDelete: Cascade)
+
+  @@unique([operatorId, stationId])
+  @@index([operatorId])
+  @@index([stationId])
+  @@map("station_assignments")
+}

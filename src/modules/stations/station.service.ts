@@ -38,6 +38,20 @@ export const StationService = {
     return station;
   },
 
+  /** Create multiple docks for a station (ADMIN only) */
+  async createDocks(stationId: string, dockNumbers: number[]) {
+    const station = await StationRepository.findById(stationId);
+    if (!station) throw new AppError(`Station ${stationId} not found`, 404);
+
+    const existingDocks = await StationRepository.findExistingDocksByNumbers(stationId, dockNumbers);
+    if (existingDocks.length > 0) {
+      const nums = existingDocks.map(d => d.dockNumber).join(', ');
+      throw new AppError(`Dock numbers already exist in this station: ${nums}`, 409);
+    }
+
+    return StationRepository.createDocks(stationId, dockNumbers);
+  },
+
   /**
    * SMART SWAP RECOMMENDER
    * ──────────────────────
@@ -83,6 +97,54 @@ export const StationService = {
       temperature: best.currentTemp,
       estimatedRange,
     };
+  },
+
+  /** Insert a battery into an empty dock (initial pairing) */
+  async insertBattery(stationId: string, dockId: string, batteryId: string) {
+    const dock = await StationRepository.findDockInStation(dockId, stationId);
+    if (!dock) {
+      throw new AppError(`Dock ${dockId} not found in station ${stationId}`, 404);
+    }
+
+    if (dock.batteryId) {
+      throw new AppError(`Dock ${dockId} already has a battery installed`, 409);
+    }
+
+    if (dock.state === 'ISOLATED_CUTOFF') {
+      throw new AppError(`Dock ${dockId} is isolated due to a thermal alarm. Cannot insert battery.`, 409);
+    }
+
+    const battery = await StationRepository.findBatteryById(batteryId);
+    if (!battery) {
+      throw new AppError(`Battery ${batteryId} not found`, 404);
+    }
+
+    if (battery.healthState === 'DECOMMISSIONED') {
+      throw new AppError(`Cannot insert a decommissioned battery`, 409);
+    }
+
+    // Since batteryId is @unique in Prisma, if the battery is already in another dock, 
+    // Prisma will automatically throw a P2002 unique constraint error. We can catch it or let the global error handler catch it.
+
+    return StationRepository.insertBattery(dockId, batteryId);
+  },
+
+  /** Remove a battery from a dock */
+  async removeBattery(stationId: string, dockId: string) {
+    const dock = await StationRepository.findDockInStation(dockId, stationId);
+    if (!dock) {
+      throw new AppError(`Dock ${dockId} not found in station ${stationId}`, 404);
+    }
+
+    if (!dock.batteryId) {
+      throw new AppError(`Dock ${dockId} is already empty`, 409);
+    }
+
+    if (dock.state === 'ISOLATED_CUTOFF') {
+      throw new AppError(`Dock ${dockId} is isolated due to a thermal alarm. Resolve the alarm first.`, 409);
+    }
+
+    return StationRepository.removeBattery(dockId);
   },
 
   /** Manually isolate a dock (ADMIN override / maintenance) */

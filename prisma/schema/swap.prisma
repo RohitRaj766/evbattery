@@ -1,0 +1,25 @@
+model Swap {
+  id              String     @id @default(uuid())
+  stationId       String
+  batteryOutId    String     // Battery given to driver
+  batteryInId     String?    // Battery received from driver (null if driver had no battery)
+  driverPhone     String     // Driver identifier (phone number)
+  driverVehicleId String?    // Vehicle plate/ID
+  status          SwapStatus @default(COMPLETED)
+  socAtSwap       Float      // SoC of outgoing battery at time of swap
+  sohAtSwap       Float      // SoH of outgoing battery at time of swap
+  tempAtSwap      Float      // Temp of outgoing battery at time of swap
+  processedBy     String?    // Operator user ID
+  swappedAt       DateTime   @default(now())
+  notes           String?
+
+  // Relations
+  station   Station @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  battery   Battery @relation(fields: [batteryOutId], references: [id])
+  operator  User?   @relation("SwapProcessedBy", fields: [processedBy], references: [id], onDelete: SetNull)
+
+  @@index([stationId])
+  @@index([driverPhone])
+  @@index([swappedAt(sort: Desc)])
+  @@map("swaps")
+}

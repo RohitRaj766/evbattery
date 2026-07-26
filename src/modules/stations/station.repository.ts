@@ -66,6 +66,15 @@ export const StationRepository = {
 
   // ── Dock queries ───────────────────────────────────────────────────────────
 
+  /** Create multiple docks for a station */
+  createDocks: (stationId: string, dockNumbers: number[]) =>
+    prisma.dock.createMany({
+      data: dockNumbers.map(num => ({
+        stationId,
+        dockNumber: num,
+      })),
+    }),
+
   /**
    * Smart Swap Recommender — find all docks in a station that meet
    * the battery distribution criteria. Sorted by SoH DESC.
@@ -95,6 +104,46 @@ export const StationRepository = {
   /** Find a specific dock within a station (validates ownership) */
   findDockInStation: (dockId: string, stationId: string) =>
     prisma.dock.findFirst({ where: { id: dockId, stationId } }),
+
+  /** Find existing dock numbers from a given list */
+  findExistingDocksByNumbers: (stationId: string, dockNumbers: number[]) =>
+    prisma.dock.findMany({
+      where: {
+        stationId,
+        dockNumber: { in: dockNumbers },
+      },
+      select: { dockNumber: true },
+    }),
+
+  /** Insert a battery into a dock (initial pairing) */
+  insertBattery: (dockId: string, batteryId: string) =>
+    prisma.dock.update({
+      where: { id: dockId },
+      data: {
+        batteryId,
+        state: DockState.CHARGING,
+      },
+    }),
+
+  /** Remove a battery from a dock and reset its telemetry cache */
+  removeBattery: (dockId: string) =>
+    prisma.dock.update({
+      where: { id: dockId },
+      data: {
+        batteryId: null,
+        state: DockState.AVAILABLE,
+        currentSoC: 0,
+        currentSoH: 0,
+        currentTemp: 0,
+        lastTelemetryAt: null,
+      },
+    }),
+
+  /** Find a battery by ID (for validation) */
+  findBatteryById: (batteryId: string) =>
+    prisma.battery.findUnique({
+      where: { id: batteryId },
+    }),
 
   /** Isolate a dock (set to ISOLATED_CUTOFF) */
   isolateDock: (dockId: string) =>

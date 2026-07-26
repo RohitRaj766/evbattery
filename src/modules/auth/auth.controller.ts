@@ -4,7 +4,7 @@
  * HTTP handlers for authentication endpoints.
  */
 
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction, CookieOptions } from 'express';
 import { AuthService, blockAccessToken } from './auth.service';
 import { RegisterDto, LoginDto, SetPasswordDto } from './auth.schema';
 import { AuthRequest } from '../../types';
@@ -13,7 +13,7 @@ import { RefreshTokenService } from './refresh-token.service';
 import { JwtService } from './jwt.service';
 
 const REFRESH_COOKIE_NAME = 'refreshToken';
-const REFRESH_COOKIE_OPTIONS = {
+const REFRESH_COOKIE_OPTIONS: CookieOptions = {
   httpOnly: true,
   secure: env.NODE_ENV === 'production',
   sameSite: env.NODE_ENV === 'production' ? 'strict' : 'lax' as const,

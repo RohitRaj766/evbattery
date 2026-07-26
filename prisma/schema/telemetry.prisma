@@ -1,0 +1,21 @@
+model Telemetry {
+  id          String   @id @default(uuid())
+  dockId      String
+  batteryId   String
+  voltage     Float    // Volts
+  current     Float    // Amperes (positive = charging, negative = discharging)
+  temperature Float    // Celsius - PRIMARY safety metric
+  soc         Float    // State of Charge %
+  soh         Float    // State of Health %
+  timestamp   DateTime @default(now())
+
+  // Relations
+  dock    Dock    @relation(fields: [dockId], references: [id], onDelete: Cascade)
+  battery Battery @relation(fields: [batteryId], references: [id], onDelete: Cascade)
+
+  // Critical index: time-series queries are always (batteryId, timestamp DESC)
+  @@index([batteryId, timestamp(sort: Desc)])
+  @@index([dockId, timestamp(sort: Desc)])
+  @@index([timestamp(sort: Desc)]) // Global time-series
+  @@map("telemetry")
+}

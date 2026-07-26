@@ -1,0 +1,36 @@
+enum Role {
+  OPERATOR  // Station-level staff who manage swaps
+  ADMIN     // Full system access: fleet, stations, alarms
+}
+
+enum DockState {
+  AVAILABLE        // Empty dock, ready to receive a battery
+  CHARGING         // Battery actively charging
+  READY            // Battery fully charged, available for swap
+  ISOLATED_CUTOFF  // Thermal safety engaged - power isolated
+  MAINTENANCE      // Offline for maintenance
+}
+
+enum AssignmentStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum AlarmStatus {
+  ACTIVE    // Threshold breach confirmed, cutoff engaged
+  SILENCED  // Operator acknowledged, monitoring continues
+  RESOLVED  // Temperature normalized, dock restored
+}
+
+enum BatteryHealthState {
+  HEALTHY       // SoH >= 85%, optimal performance
+  DEGRADED      // 75% <= SoH < 85%, acceptable but monitored
+  CRITICAL      // SoH < 75%, must be decommissioned
+  DECOMMISSIONED // Retired from fleet, awaiting disposal
+}
+
+enum SwapStatus {
+  COMPLETED
+  FAILED
+  CANCELLED
+}
