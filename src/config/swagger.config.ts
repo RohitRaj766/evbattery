@@ -76,9 +76,9 @@ export const swaggerDocument = {
           name: { type: 'string', example: 'Rohit Sharma' },
           role: {
             type: 'string',
-            enum: ['OPERATOR', 'ADMIN'],
-            default: 'OPERATOR',
-            example: 'OPERATOR',
+            enum: ['OPERATOR', 'ADMIN', 'DRIVER'],
+            default: 'DRIVER',
+            example: 'DRIVER',
           },
         },
       },

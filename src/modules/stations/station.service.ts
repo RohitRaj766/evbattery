@@ -26,6 +26,28 @@ export const StationService = {
     return StationRepository.findAllActive();
   },
 
+  /** Get nearest active station from driver's GPS location */
+  async getNearestStation(latitude: number, longitude: number) {
+    const stations = await StationRepository.findAllActive();
+    if (stations.length === 0) return null;
+
+    const toRad = (val: number) => (val * Math.PI) / 180;
+    const R = 6371; // Earth radius in km
+
+    const sorted = stations.map((st) => {
+      const dLat = toRad(st.latitude - latitude);
+      const dLng = toRad(st.longitude - longitude);
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(toRad(latitude)) * Math.cos(toRad(st.latitude)) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      const distanceKm = Math.round(R * c * 10) / 10;
+      return { ...st, distanceKm };
+    }).sort((a, b) => a.distanceKm - b.distanceKm);
+
+    return sorted[0] || null;
+  },
+
   /** Create a new swapping station (ADMIN only) */
   async createStation(dto: CreateStationDto) {
     return StationRepository.create(dto);

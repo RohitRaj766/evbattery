@@ -15,6 +15,21 @@ export const StationController = {
     } catch (err) { next(err); }
   },
 
+  /** GET /stations/nearest */
+  async getNearest(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { lat, lng } = req.query as { lat?: string; lng?: string };
+      const latitude = parseFloat(lat || '0');
+      const longitude = parseFloat(lng || '0');
+      const station = await StationService.getNearestStation(latitude, longitude);
+      res.status(200).json({
+        success: true,
+        message: 'Nearest station identified',
+        data: station,
+      });
+    } catch (err) { next(err); }
+  },
+
   /** POST /stations */
   async create(req: AuthRequest, res: Response, next: NextFunction): Promise<void> {
     try {

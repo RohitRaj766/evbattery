@@ -1,6 +1,7 @@
 enum Role {
   OPERATOR  // Station-level staff who manage swaps
   ADMIN     // Full system access: fleet, stations, alarms
+  DRIVER    // EV vehicle drivers swapping batteries
 }
 
 enum DockState {

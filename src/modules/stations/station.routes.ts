@@ -16,6 +16,9 @@ router.use(authenticate);
 /** GET /api/v1/stations */
 router.get('/', StationController.list);
 
+/** GET /api/v1/stations/nearest - Driver GPS station locator */
+router.get('/nearest', StationController.getNearest);
+
 /** POST /api/v1/stations - ADMIN only */
 router.post(
   '/',

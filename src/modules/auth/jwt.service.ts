@@ -4,7 +4,7 @@ import { env } from '../../config/env.config';
 export interface JwtPayload {
   sub: string;
   email: string;
-  role: 'OPERATOR' | 'ADMIN';
+  role: 'OPERATOR' | 'ADMIN' | 'DRIVER';
   tokenVersion?: number;
 }
 

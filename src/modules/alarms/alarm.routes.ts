@@ -21,7 +21,7 @@ router.get('/:id', AlarmController.getById);
 /** PATCH /api/v1/alarms/:id/silence - Silence alarm (OPERATOR+) */
 router.patch('/:id/silence', AlarmController.silence);
 
-/** PATCH /api/v1/alarms/:id/resolve - Resolve alarm (ADMIN only - physical inspection required) */
-router.patch('/:id/resolve', authorize('ADMIN'), AlarmController.resolve);
+/** PATCH /api/v1/alarms/:id/resolve - Resolve alarm (ADMIN or OPERATOR) */
+router.patch('/:id/resolve', authorize('ADMIN', 'OPERATOR'), AlarmController.resolve);
 
 export default router;

@@ -8,8 +8,8 @@ export const CreateSwapSchema = z.object({
   stationId: z.string().uuid(),
   batteryOutId: z.string().uuid('Battery to give to driver is required'),
   batteryInId: z.string().uuid().optional(),
-  driverPhone: z.string().min(10).max(15),
-  driverVehicleId: z.string().optional(),
+  driverPhone: z.string().optional().default('N/A'),
+  driverVehicleId: z.string().min(2, 'Driver vehicle plate/registration number is required for security tracking'),
   notes: z.string().optional(),
 });
 
