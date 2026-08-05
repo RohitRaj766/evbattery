@@ -41,7 +41,7 @@ const EnvSchema = z.object({
   THERMAL_ALARM_DEBOUNCE_MS: z.coerce.number().default(3000),
 
   // CORS
-  ALLOWED_ORIGINS: z.string().default('http://localhost:3000'),
+  ALLOWED_ORIGINS: z.string().default('http://localhost:3000,https://evbattery-fr.vercel.app'),
 });
 
 const _parsed = EnvSchema.safeParse(process.env);
